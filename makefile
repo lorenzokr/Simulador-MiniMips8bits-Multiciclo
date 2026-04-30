@@ -1,5 +1,5 @@
 compila:
-		gcc ProjetoPI2_V3.c -o teste
+		gcc ProjetoPI2_V3.c -o teste -g
 		./teste
 clear:
 		rm teste

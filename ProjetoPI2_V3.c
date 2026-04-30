@@ -42,11 +42,12 @@ int memoria[256] = {0};
 int oldreg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int oldmem[256] = {0};
 int oldpc=0;
+char memu[256][17];
 
 instrucao decodificar(char *bin);
-void imprimir_ass (char*bin, char** mem_instr, int k);
-void carregamem (char **mem_instr, int m, int n);
-void imprimir_mem_instr(char **mem_instr, int m, int n, char* bin);
+void imprimir_ass (char*bin, char memu[256][17], int k);
+void carregamem (char memu[256][17], int m, int n);
+void imprimir_mem_instr(char memu[256][17], int m, int n, char* bin);
 void imprimir_reg();
 void imprimir_instrucao(instrucao p);
 char **criameminstr(int m, int n);
@@ -55,7 +56,7 @@ int mux1(controle c, instrucao i);
 int mux_branch(int sinal_branch,int entrada1,int entrada2);
 int mux_jump(int sinal_jump,int entrada1,int entrada2);
 int somador(int entrada1,int entrada2);
-instrucao busca (char *bin, char **mem_instr, int pc);
+instrucao busca (char *bin, char memu[256][17], int pc);
 controle sinais_controle(instrucao i, metricas *m);
 void executar(instrucao i, controle c, int *pc);
 int ula(int op1, int op2, controle c, int *overflow,int *zero);//adicionei o zero na função da ula que vai ser utilizado para o beq
@@ -74,7 +75,7 @@ int main() {
     FILE *mem = NULL;
     char **mem_instr = NULL;
     int m = 256;
-    int n = 16;
+    int n = 17;
     int escolha=1,pc=0;
     char bin[17];
     instrucao i;
@@ -100,13 +101,13 @@ int main() {
      switch (escolha) {
          case 1:
              printf("\nCarregando memoria\n");
-             carregamem(mem_instr, m, n);
+             carregamem(memu, m, n);
              break;
          case 2: 
             carregadat(memoria);
          break;
          case 3:
-            imprimir_mem_instr(mem_instr,m,n, bin);
+            imprimir_mem_instr(memu,m,n, bin);
             imprimir_mem_dados(memoria);
          break;
          case 4: printf("\nbanco de registradores\n");
@@ -140,7 +141,7 @@ int main() {
             mostrar_metricas(metricas);
          break;
          case 8:
-          do{i = busca(bin, mem_instr, pc);
+          do{i = busca(bin, memu, pc);
            c = sinais_controle(i, &metricas);
           int old = pc;
           executar(i, c, &pc);
@@ -156,7 +157,7 @@ int main() {
             for(int k=0;k<8;k++){
             oldreg[k] = registradores[k];}
             oldpc = pc;
-           i = busca(bin, mem_instr, pc);
+           i = busca(bin, memu, pc);
            c = sinais_controle(i, &metricas);
           executar(i, c, &pc);
           printf("Instrução executada!\n");
@@ -168,7 +169,7 @@ int main() {
             memoria[j] = oldmem[j];}
             for(int k=0;k<8;k++){
             registradores[k] = oldreg[k];}
-            i = busca(bin, mem_instr, pc);
+            i = busca(bin, memu, pc);
            printf("\nPC da proxima instrucao:%d",pc);
            break;
          default:
@@ -203,31 +204,27 @@ void desalocameminstr(char **mem_instr, int m, int n){
     return;
 }
 
-void carregamem (char **mem_instr, int m, int n){
+void carregamem (char memu[256][17], int m, int n){
   char arq[256];
   setbuf(stdin, NULL);
   printf("Digite o nome do arquivo a ser lido: ");
-  scanf("%s", &arq);
+  scanf("%s", arq);
   mem = fopen(arq, "r");
   if (mem == NULL){
     printf("Erro ao abrir o arquivo!\n");
-    return; }
-    int c;
-    for(int i=0;i<m;i++){
-        for(int j=0;j<n;j++) {
-            c = fgetc(mem);
-            if(c == '1'){
-                mem_instr[i][j] = c; }
-                else if(c=='0'){
-                    mem_instr[i][j] = '0';
-                }
-                else if( c == '\n'){
-                j--;
-                }else {
-                mem_instr[i][j] = '0';
-                }
-        }
-    } fclose(mem);
+    return;
+      }
+    int i=0;
+    char aux[32];
+    while(fgets(aux, sizeof(aux), mem) != NULL && i<128){
+    aux[strcspn(aux, "\n")]= '\0';
+    if(strcmp(aux, ".data")==0){
+      break;
+    }
+      strcpy(memu[i], aux);
+    i++;
+    }
+     fclose(mem);
     printf("Memoria carregada!\n");
     return;
 }
@@ -279,20 +276,20 @@ instrucao decodificar(char *bin) {
         } return i;
 }
 
-void imprimir_mem_instr(char **mem_instr, int m, int n, char* bin) {
+void imprimir_mem_instr(char memu[256][17], int m, int n, char* bin) {
     int k=0,j=0;
     printf("\n=======MEMORIA DE INSTRUCAO======\n");
     for ( k = 0; k < m; k++) {
       printf("Instrução %d: ", k+1);
         for ( j = 0; j < n; j++) {
-            printf("%c",mem_instr[k][j]);
+            printf("%c",memu[k][j]);
         }
-        imprimir_ass(bin,mem_instr, k);
+        imprimir_ass(bin,memu, k);
         printf("\n");
     }
 }
-void imprimir_ass (char*bin, char** mem_instr, int k){
-    strcpy(bin, mem_instr[k]);
+void imprimir_ass (char*bin, char memu[256][17], int k){
+    strcpy(bin, memu[k]);
     instrucao i = decodificar(bin);
     imprimir_instrucao(i); 
 }
@@ -415,8 +412,8 @@ controle sinais_controle(instrucao i, metricas *m){
 }
 
 //função que realiza a busca da instrução
-instrucao busca (char *bin, char **mem_instr, int pc){
-    strcpy(bin, mem_instr[pc]);
+instrucao busca (char *bin, char memu[256][17], int pc){
+    strcpy(bin, memu[pc]);
     instrucao i = decodificar(bin);
     printf("\ninstrucao em binario:%s",bin);
     imprimir_instrucao(i); return i;
