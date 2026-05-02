@@ -66,9 +66,9 @@ void imprimir_mem_dados(int mem[]);
 void gerar_asm(instrucao p,int pc,char bin[]);
 void gerar_dat(int mem[]);
 void mostrar_metricas(metricas);
-void carregadat (int *mem_dados);
 void conversao(char bin[], int numero);
 void complemento2(char bin[]);
+void imprimir_memoria(char memu[256][17], int m, int n, char* bin);
 
 
 int main() {
@@ -86,8 +86,8 @@ int main() {
     
     printf("\n\nMenu de opcoes do programa");
     do { printf("\n\n[1] Carregar memoria de instrucao");
-     printf("\n[2] Carregar memoria de dados");
-     printf("\n[3] Imprimir memoria de instrucoes e dados");
+     printf("\n[2] Vazio");
+     printf("\n[3] Imprimir memoria");
      printf("\n[4] Imprimir banco de registradores");
      printf("\n[5] Imprimir todo simulador");
      printf("\n[6] Salvar .asm e .dat");
@@ -104,11 +104,9 @@ int main() {
              carregamem(memu, m, n);
              break;
          case 2: 
-            carregadat(memoria);
          break;
          case 3:
-            imprimir_mem_instr(memu,m,n, bin);
-            imprimir_mem_dados(memoria);
+            imprimir_memoria(memu,m,n, bin);
          break;
          case 4: printf("\nbanco de registradores\n");
          imprimir_reg();
@@ -229,25 +227,6 @@ void carregamem (char memu[256][17], int m, int n){
     return;
 }
 
-void carregadat(int *mem_dados){
-  char arq[256];
-  setbuf(stdin, NULL);
-  printf("Digite o nome do arquivo a ser lido: ");
-  scanf("%s", &arq);
-    mem = fopen(arq, "r");
-    if (mem == NULL){
-        printf("Erro ao abrir o arquivo!\n");
-        return;
-    }
-    char c[6];
-    int i = 0;
-    while (i < 256 && fscanf(mem, "%5s", c) == 1){
-        mem_dados[i] = atoi(c);
-        i++;
-    }
-    fclose(mem);
-    printf("\nMemória de dados carregada");
-}
 
 instrucao decodificar(char *bin) {
     unsigned int valor = strtoul(bin, NULL, 2);
@@ -717,4 +696,68 @@ void complemento2(char bin[])
             carry = 0;
         }
     }
+}
+void imprimir_memoria(char memu[256][17], int m, int n, char* bin)
+{
+    int k = 0, j = 0;
+
+    // ================= INSTRUÇÕES =================
+    printf("\n================ MEMORIA DE INSTRUCAO ================\n");
+
+    printf("+---------+------------------+------------------------------+\n");
+    printf("| End     | Binario          | Assembly                     |\n");
+    printf("+---------+------------------+------------------------------+\n");
+
+    for (k = 0; k < 128 && k < m; k++) {
+
+        printf("| %7d | ", k);
+
+        // BINÁRIO ou vazio
+        if (memu[k][0] == '\0') {
+            printf("                  | ");
+            printf("%-28s |\n", "");
+            continue;
+        }
+
+        for (j = 0; j < n; j++) {
+            printf("%c", memu[k][j]);
+        }
+
+        printf(" | ");
+
+        // captura assembly sem quebrar linha visual
+        imprimir_ass(bin, memu, k);
+
+        printf("%*s|\n", 1, "");
+    }
+
+    printf("+---------+------------------+------------------------------+\n");
+
+
+    // ================= DADOS =================
+    printf("\n================ MEMORIA DE DADOS ================\n");
+
+    printf("+---------+------------------+----------+\n");
+    printf("| End     | Binario          | Decimal  |\n");
+    printf("+---------+------------------+----------+\n");
+
+    for (k = 128; k < 256 && k < m; k++) {
+
+        printf("| %7d | ", k);
+
+        if (memu[k][0] == '\0') {
+            printf("                  | %8d |\n", 0);
+            continue;
+        }
+
+        for (j = 0; j < n; j++) {
+            printf("%c", memu[k][j]);
+        }
+
+        unsigned int valor = strtoul(memu[k], NULL, 2);
+
+        printf(" | %8u |\n", valor);
+    }
+
+    printf("+---------+------------------+----------+\n");
 }
