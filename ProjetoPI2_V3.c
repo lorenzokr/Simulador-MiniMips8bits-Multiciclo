@@ -53,11 +53,7 @@ char memu[256][17];
 
 instrucao decodificar(char *bin);
 void imprimir_ass (char*bin, char memu[256][17], int k);
-<<<<<<< HEAD
 void carregamem (char memu[256][17]);
-=======
-void carregamem (char memu[256][17], int m, int n);
->>>>>>> main
 void imprimir_mem_instr(char memu[256][17], int m, int n, char* bin);
 void imprimir_reg();
 void imprimir_instrucao(instrucao p);
@@ -77,7 +73,6 @@ void imprimir_mem_dados(int mem[]);
 void gerar_asm(instrucao p,int pc,char bin[]);
 void gerar_dat(int mem[]);
 void mostrar_metricas(metricas);
-<<<<<<< HEAD
 void carregadat (int *mem_dados);
 void conversao(char bin[], int numero);
 void complemento2(char bin[]);
@@ -93,23 +88,13 @@ void etapa_busca_multiciclo(int *estado_atual,char menu[256][17],int *pc,char Re
 void etapa_decodificacao_multiciclo(int *estado_atual,char RegIR[17],int *Reg_aluout,int banco_reg[],int *reg_tempA,int *reg_tempB,int pc);
 void etapa_execucao_tipoR(int *estado_atual,int reg_tempA,int reg_tempB,int *Reg_aluout);
 void etapa_termino_tipoR(int *estado_atual,int Reg_aluout,char RegIR[17],int banco_reg[]);
-=======
-void conversao(char bin[], int numero);
-void complemento2(char bin[]);
-void imprimir_memoria(char memu[256][17], int m, int n, char* bin);
-
->>>>>>> main
 
 int main() {
     FILE *mem = NULL;
     char **mem_instr = NULL;
     int m = 256;
     int n = 17;
-<<<<<<< HEAD
     int escolha=1,pc=0,estado_atual=0,etapa=0;
-=======
-    int escolha=1,pc=0;
->>>>>>> main
     char bin[17];
     int Reg_tempA=0;
     int Reg_tempB=0;
@@ -124,13 +109,8 @@ int main() {
     
     printf("\n\nMenu de opcoes do programa");
     do { printf("\n\n[1] Carregar memoria de instrucao");
-<<<<<<< HEAD
      printf("\n[2] executar um stap no multiclo");
      printf("\n[3] Imprimir memoria de instrucoes e dados");
-=======
-     printf("\n[2] Vazio");
-     printf("\n[3] Imprimir memoria");
->>>>>>> main
      printf("\n[4] Imprimir banco de registradores");
      printf("\n[5] Imprimir todo simulador");
      printf("\n[6] Salvar .asm e .dat");
@@ -144,7 +124,6 @@ int main() {
      switch (escolha) {
          case 1:
              printf("\nCarregando memoria\n");
-<<<<<<< HEAD
              carregamem(memu);
              break;
          case 2: 
@@ -181,14 +160,6 @@ int main() {
          break;
          case 3:
             imprimir_memoria(memu,m,n,bin);
-=======
-             carregamem(memu, m, n);
-             break;
-         case 2: 
-         break;
-         case 3:
-            imprimir_memoria(memu,m,n, bin);
->>>>>>> main
          break;
          case 4: printf("\nbanco de registradores\n");
          imprimir_reg();
@@ -286,7 +257,6 @@ void desalocameminstr(char **mem_instr, int m, int n){
 #include <stdio.h>
 #include <string.h>
 
-<<<<<<< HEAD
 FILE *mem;
 
 void carregamem(char memu[256][17]) {
@@ -358,33 +328,6 @@ void carregadat(int *mem_dados){
     fclose(mem);
     printf("\nMemória de dados carregada");
 }
-=======
-void carregamem (char memu[256][17], int m, int n){
-  char arq[256];
-  setbuf(stdin, NULL);
-  printf("Digite o nome do arquivo a ser lido: ");
-  scanf("%s", arq);
-  mem = fopen(arq, "r");
-  if (mem == NULL){
-    printf("Erro ao abrir o arquivo!\n");
-    return;
-      }
-    int i=0;
-    char aux[32];
-    while(fgets(aux, sizeof(aux), mem) != NULL && i<128){
-    aux[strcspn(aux, "\n")]= '\0';
-    if(strcmp(aux, ".data")==0){
-      break;
-    }
-      strcpy(memu[i], aux);
-    i++;
-    }
-     fclose(mem);
-    printf("Memoria carregada!\n");
-    return;
-}
-
->>>>>>> main
 
 instrucao decodificar(char *bin) {
     unsigned int valor = strtoul(bin, NULL, 2);
@@ -789,7 +732,6 @@ void mostrar_metricas(metricas m) {
 void conversao(char bin[], int numero)
 {
     int atual = numero;
-<<<<<<< HEAD
     int indice = 15;   // 16 bits → começa no 15
     int resto = 0;
 
@@ -807,67 +749,29 @@ void conversao(char bin[], int numero)
         else
             bin[indice] = '1';
 
-=======
-    int indice = 7;
-    int resto=0;
-
-    // se for negativo eu trabalho como se fosse positivo para depois eu aplica o complemento de dois
-    if (numero < 0)
-        atual = -numero;
-
-    // converte normalmente
-    while (atual > 0 && indice >= 0)
-    {
-        resto=atual % 2;
-        if (resto==0)
-        {
-            bin[indice]='0';
-        }
-        else
-        {
-            bin[indice]='1';
-        }
->>>>>>> main
         atual /= 2;
         indice--;
     }
 
-<<<<<<< HEAD
     // completa com zeros à esquerda
-=======
->>>>>>> main
     while (indice >= 0)
     {
         bin[indice] = '0';
         indice--;
     }
 
-<<<<<<< HEAD
     // complemento de dois se negativo
-=======
-    // se o numero for negativo eu aplico o complemento de dois
->>>>>>> main
     if (numero < 0)
     {
         complemento2(bin);
     }
 
-<<<<<<< HEAD
     bin[16] = '\0'; // final da string (16 bits)
 }
 void complemento2(char bin[])
 {
     // inverte os bits
     for (int i = 0; i < 16; i++)
-=======
-    bin[8] = '\0';
-}
-
-void complemento2(char bin[])
-{
-    //aqui eu inverto os bits
-    for (int i = 0; i < 8; i++)
->>>>>>> main
     {
         if (bin[i] == '0')
             bin[i] = '1';
@@ -875,17 +779,10 @@ void complemento2(char bin[])
             bin[i] = '0';
     }
 
-<<<<<<< HEAD
     // soma +1
     int carry = 1;
 
     for (int i = 15; i >= 0; i--)
-=======
-    //aqui eu somo +1
-    int carry = 1;
-
-    for (int i = 7; i >= 0; i--)
->>>>>>> main
     {
         if (bin[i] == '1' && carry == 1)
         {
@@ -963,7 +860,6 @@ void imprimir_memoria(char memu[256][17], int m, int n, char* bin)
 
     printf("+---------+------------------+----------+\n");
 }
-<<<<<<< HEAD
 controle sinais_controle_multiclo(int estado_atual)
 {
     controle c;
@@ -1250,5 +1146,3 @@ void etapa_termino_tipoR(int *estado_atual,int Reg_aluout,char RegIR[17],int ban
     banco_reg[saida_mux_RegDST]=saida_mux_memtoReg;
     *estado_atual=0;
 }
-=======
->>>>>>> main
