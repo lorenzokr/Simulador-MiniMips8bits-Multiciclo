@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include<string.h>
 #include <stdint.h>
- FILE *mem = NULL;
-    char **mem_instr = NULL;
 
 //struct para busca
 typedef struct instrucao {
@@ -43,13 +41,28 @@ typedef struct metricas {
     int contInstJump;
 } metricas;
 
+typedef struct nodoPilha nodoPilha;
 
-int registradores[8]={0, 100, -25, 0, -30, 0, 0, -90};
+typedef struct nodoPilha {
+    nodoPilha *ant;
+    int registradores[8], pc, Reg_tempA, Reg_tempB, Reg_dados, Reg_aluOUT;
+    char RegIR[17], memu[256][17];
+} nodoPilha;
+
+typedef struct descritorPilha {
+    nodoPilha *fundo;
+    nodoPilha *topo;
+} descritorPilha;
+
+
+int registradores[8] = {0};
 int memoria[256] = {0};
 int oldreg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int oldmem[256] = {0};
 int oldpc=0;
 char memu[256][17];
+FILE *mem = NULL;
+char **mem_instr = NULL;
 
 instrucao decodificar(char *bin);
 void imprimir_ass (char*bin, char memu[256][17], int k);
@@ -88,6 +101,11 @@ void etapa_busca_multiciclo(int *estado_atual,char menu[256][17],int *pc,char Re
 void etapa_decodificacao_multiciclo(int *estado_atual,char RegIR[17],int *Reg_aluout,int banco_reg[],int *reg_tempA,int *reg_tempB,int pc);
 void etapa_execucao_tipoR(int *estado_atual,int reg_tempA,int reg_tempB,int *Reg_aluout);
 void etapa_termino_tipoR(int *estado_atual,int Reg_aluout,char RegIR[17],int banco_reg[]);
+void adicionarStepPilha (descritorPilha *descritor, int registradores[8], char RegIR[17], int pc, int Reg_tempA, int Reg_tempB, int Reg_dados, int Reg_aluOUT);
+void voltarStepPilha (descritorPilha *descritor, int registradores[8], char RegIR[17], int *pc, int *Reg_tempA, int *Reg_tempB, int *Reg_dados, int *Reg_aluOUT);
+void esvaziarPilha (descritorPilha *descritor);
+void limparBuffer (); 
+
 
 int main() {
     FILE *mem = NULL;
@@ -106,20 +124,23 @@ int main() {
     metricas metricas = {0};
     mem_instr = criameminstr(m, n);
     int temp_pc=0;
+    descritorPilha Pilha;
+    Pilha.fundo = NULL;
+    Pilha.topo = NULL;
     
-    printf("\n\nMenu de opcoes do programa");
-    do { printf("\n\n[1] Carregar memoria de instrucao");
-     printf("\n[2] executar um stap no multiclo");
-     printf("\n[3] Imprimir memoria de instrucoes e dados");
+    printf("\n\nMenu de opções do programa");
+    do { printf("\n\n[1] Carregar memória de instruções");
+     printf("\n[2] executar um stap no multiciclo");
+     printf("\n[3] Imprimir memória de instruções e dados");
      printf("\n[4] Imprimir banco de registradores");
      printf("\n[5] Imprimir todo simulador");
      printf("\n[6] Salvar .asm e .dat");
-     printf("\n[7] Mostrar Estatisticas do programa");
+     printf("\n[7] Mostrar Estatísticas do programa");
      printf("\n[8] Executar programa(RUN)");
-     printf("\n[9] Executar uma instruçao(STEP)");
-     printf("\n[10] Voltar uma instrucao");
+     printf("\n[9] Executar uma instrução(STEP)");
+     printf("\n[10] Voltar uma instrução");
      printf("\n[0] Encerrar programa");
-     printf("\nescolha uma opcao: ");
+     printf("\n\nescolha uma opção: ");
      scanf("%d",&escolha);
      switch (escolha) {
          case 1:
@@ -211,15 +232,12 @@ int main() {
            i = busca(bin, memu, pc);
            c = sinais_controle(i, &metricas);
           executar(i, c, &pc);
+          adicionarStepPilha(&Pilha, registradores, RegIR, pc, Reg_tempA, Reg_tempB, Reg_dados, Reg_aluOUT);
           printf("Instrução executada!\n");
           printf("PC da proxima instrucao:%d\n",pc);
          break;
          case 10:
-            pc = oldpc;
-             for(int j=0;j<256;j++){
-            memoria[j] = oldmem[j];}
-            for(int k=0;k<8;k++){
-            registradores[k] = oldreg[k];}
+            voltarStepPilha(&Pilha, registradores, RegIR, &pc, &Reg_tempA, &Reg_tempB, &Reg_dados, &Reg_aluOUT);
             i = busca(bin, memu, pc);
            printf("\nPC da proxima instrucao:%d",pc);
            break;
@@ -229,6 +247,7 @@ int main() {
     }
 } while (escolha !=0);
 desalocameminstr(mem_instr, m, n);
+esvaziarPilha(&Pilha);
 return 0;
 }
 
@@ -312,8 +331,10 @@ void carregamem(char memu[256][17]) {
 void carregadat(int *mem_dados){
   char arq[256];
   setbuf(stdin, NULL);
-  printf("Digite o nome do arquivo a ser lido: ");
-  scanf("%s", &arq);
+    printf("Digite o nome do arquivo a ser lido: ");
+    limparBuffer();
+    fgets(arq, 255, stdin);
+    arq[strcspn(arq, "\n")] = '\0';
     mem = fopen(arq, "r");
     if (mem == NULL){
         printf("Erro ao abrir o arquivo!\n");
@@ -489,6 +510,12 @@ controle sinais_controle(instrucao i, metricas *m){
 
     } return c;
 
+}
+
+void limparBuffer() {
+    char c;
+    while ((c = getchar()) != EOF && c !='\n');
+    return;
 }
 
 //função que realiza a busca da instrução
@@ -1145,4 +1172,51 @@ void etapa_termino_tipoR(int *estado_atual,int Reg_aluout,char RegIR[17],int ban
     printf("\nSaida mux memoria para o registrador:%d",saida_mux_memtoReg);
     banco_reg[saida_mux_RegDST]=saida_mux_memtoReg;
     *estado_atual=0;
+}
+
+void adicionarStepPilha (descritorPilha *descritor, int registradores[8], char RegIR[17], int pc, int Reg_tempA, int Reg_tempB, int Reg_dados, int Reg_aluOUT) {
+
+    nodoPilha *nodo = malloc(sizeof(nodoPilha));
+
+    memcpy(nodo->memu, memu, sizeof(nodo->memu));
+    memcpy(nodo->registradores, registradores, sizeof(nodo->registradores));
+    memcpy(nodo->RegIR, RegIR, sizeof(nodo->RegIR));
+    nodo->pc = pc;
+    nodo->Reg_aluOUT = Reg_aluOUT;
+    nodo->Reg_dados = Reg_dados;
+    nodo->Reg_tempA = Reg_tempA;
+    nodo->Reg_tempB = Reg_tempB;
+    nodo->ant = descritor->topo;
+    descritor->topo = nodo;
+
+    if (descritor->fundo == NULL) {
+        descritor->fundo = nodo;
+    }
+    return;
+}
+
+void voltarStepPilha (descritorPilha *descritor, int registradores[8], char RegIR[17], int *pc, int *Reg_tempA, int *Reg_tempB, int *Reg_dados, int *Reg_aluOUT) {
+    nodoPilha *nodo = descritor->topo;
+    memcpy(memu, nodo->memu, sizeof(nodo->memu));
+    memcpy(registradores, nodo->registradores, sizeof(nodo->registradores));
+    memcpy(RegIR, nodo->RegIR, sizeof(nodo->RegIR));
+    *pc = nodo->pc;
+    *Reg_aluOUT = nodo->Reg_aluOUT;
+    *Reg_dados = nodo->Reg_dados;
+    *Reg_tempA = nodo->Reg_tempA;
+    *Reg_tempB = nodo->Reg_tempB;
+    descritor->topo = nodo->ant;
+    free(nodo);
+}
+
+void esvaziarPilha (descritorPilha *descritor) {
+    nodoPilha *nodo = descritor->topo, *nodoAux;
+    while (nodo != NULL) {
+        nodoAux = nodo->ant;
+        free(nodo);
+        nodo = nodoAux;
+    }
+    descritor->topo = NULL;
+    descritor->fundo = NULL;
+    return;
 }
