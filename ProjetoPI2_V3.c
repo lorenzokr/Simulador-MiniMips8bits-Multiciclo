@@ -122,16 +122,15 @@ int main() {
     instrucao i;
     controle c;
     metricas metricas = {0};
-    mem_instr = criameminstr(m, n);
     int temp_pc=0;
     descritorPilha Pilha;
     Pilha.fundo = NULL;
     Pilha.topo = NULL;
-    
-    printf("\n\nMenu de opções do programa");
-    do { printf("\n\n[1] Carregar memória de instruções");
-     printf("\n[2] executar um stap no multiciclo");
-     printf("\n[3] Imprimir memória de instruções e dados");
+    printf("\n\nMenu de opcoes do programa");
+    do { 
+     printf("\n\n[1] Carregar memoria de instrucao");
+     printf("\n[2] executar um stap no multiclo");
+     printf("\n[3] Imprimir memoria");
      printf("\n[4] Imprimir banco de registradores");
      printf("\n[5] Imprimir todo simulador");
      printf("\n[6] Salvar .asm e .dat");
@@ -185,43 +184,13 @@ int main() {
          case 4: printf("\nbanco de registradores\n");
          imprimir_reg();
          break;
-         case 5: printf("\nImprimindo banco de registradores e memória de dados:");
-            imprimir_mem_dados(memoria);
-            imprimir_reg();
-            printf("Instrução executada em ");
-            imprimir_instrucao(i);
-            printf("\nPC da proxima instrucao:%d",pc);
+         case 5:
          break;
          case 6:
-            printf("\nArquivo  Assembly sendo gerado...");
-            strcpy(bin, mem_instr[temp_pc]);
-            while (strcmp(bin,"0000000000000000") !=0)
-            {
-                instrucao p=decodificar(bin);
-                gerar_asm(p,temp_pc,bin);
-                temp_pc++;
-                strcpy(bin, mem_instr[temp_pc]);                
-            }
-            printf("\nArquivo gerado!");
-            printf("\nArquivo sendo de dados sendo gerado....");
-            gerar_dat(memoria);
-            printf("\nArquivo gerado!");
-
          break;
          case 7:
-            printf("Estatisticas do programa: ");
-            mostrar_metricas(metricas);
          break;
          case 8:
-          do{i = busca(bin, memu, pc);
-           c = sinais_controle(i, &metricas);
-          int old = pc;
-          executar(i, c, &pc);
-        if(pc == old){
-          pc++;
-        }
-        }while(pc<=255);
-        printf("Programa Executado!\n");
          break;
          case 9:
             for(int j=0;j<256;j++){
@@ -240,43 +209,21 @@ int main() {
             voltarStepPilha(&Pilha, registradores, RegIR, &pc, &Reg_tempA, &Reg_tempB, &Reg_dados, &Reg_aluOUT);
             i = busca(bin, memu, pc);
            printf("\nPC da proxima instrucao:%d",pc);
+         break;
+         case 10:
            break;
          default:
              return 0;
              break;
     }
 } while (escolha !=0);
-desalocameminstr(mem_instr, m, n);
+
 esvaziarPilha(&Pilha);
 return 0;
 }
 
 
-char **criameminstr(int m, int n){
-    int i;
-    char **mem_instr = NULL;
-    mem_instr = (char**) malloc(m*sizeof(char*));
-    for(i=0;i<m;i++){
-        mem_instr[i] = (char*) malloc((n+1)*sizeof(char));
-        for (int j = 0; j < 16; j++){
-            mem_instr[i][j] = '0';
-        }
-        mem_instr[i][n] = '\0';
-    } return mem_instr;
-}
 
-void desalocameminstr(char **mem_instr, int m, int n){
-    int i;
-    for(i=0;i<m;i++){
-        free(mem_instr[i]);
-    }
-    free(mem_instr);
-    return;
-}
-#include <stdio.h>
-#include <string.h>
-
-FILE *mem;
 
 void carregamem(char memu[256][17]) {
 
@@ -328,27 +275,7 @@ void carregamem(char memu[256][17]) {
 
     printf("Memoria carregada!\n");
 }
-void carregadat(int *mem_dados){
-  char arq[256];
-  setbuf(stdin, NULL);
-    printf("Digite o nome do arquivo a ser lido: ");
-    limparBuffer();
-    fgets(arq, 255, stdin);
-    arq[strcspn(arq, "\n")] = '\0';
-    mem = fopen(arq, "r");
-    if (mem == NULL){
-        printf("Erro ao abrir o arquivo!\n");
-        return;
-    }
-    char c[6];
-    int i = 0;
-    while (i < 256 && fscanf(mem, "%5s", c) == 1){
-        mem_dados[i] = atoi(c);
-        i++;
-    }
-    fclose(mem);
-    printf("\nMemória de dados carregada");
-}
+
 
 instrucao decodificar(char *bin) {
     unsigned int valor = strtoul(bin, NULL, 2);
@@ -377,18 +304,7 @@ instrucao decodificar(char *bin) {
         } return i;
 }
 
-void imprimir_mem_instr(char memu[256][17], int m, int n, char* bin) {
-    int k=0,j=0;
-    printf("\n=======MEMORIA DE INSTRUCAO======\n");
-    for ( k = 0; k < m; k++) {
-      printf("Instrução %d: ", k+1);
-        for ( j = 0; j < n; j++) {
-            printf("%c",memu[k][j]);
-        }
-        imprimir_ass(bin,memu, k);
-        printf("\n");
-    }
-}
+
 void imprimir_ass (char*bin, char memu[256][17], int k){
     strcpy(bin, memu[k]);
     instrucao i = decodificar(bin);
@@ -450,67 +366,6 @@ void imprimir_instrucao(instrucao p) {
     }
 }
 
-//Função que recebe a instrução convertida e decodifica os sinais de controle
-controle sinais_controle(instrucao i, metricas *m){
-    controle c;
-    // Inicializa tudo com 0
-    c.RegDst = 0;
-    c.ALUSrc = 0;
-    c.MemToReg = 0;
-    c.RegWrite = 0;
-    c.MemRead = 0;
-    c.MemWrite = 0;
-    c.Branch = 0;
-    c.ALUOp = 0;
-    c.jump = 0;
-    m->contInst ++;
-    switch(i.opcode){
-        case 0:
-            // Tipo R
-            c.RegDst = 1;
-            c.ALUSrc = 0;
-            c.MemToReg = 0;
-            c.RegWrite = 1;
-            c.ALUOp = i.funct; // usa funct direto
-            m->contInstReg ++;
-            break;
-        case 4:
-            // ADDI
-            c.RegDst = 0;
-            c.ALUSrc = 1;
-            c.RegWrite = 1;
-            c.ALUOp = 0;
-            m->contInstImm ++;
-            break;
-        case 11:
-            // LW
-            c.ALUSrc = 1;
-            c.MemToReg = 1;
-            c.RegWrite = 1;
-            c.MemRead = 1;
-            m->contInstImm ++;
-            break;
-        case 15:
-            // SW
-            c.ALUSrc = 1;
-            c.MemWrite = 1;
-            m->contInstImm ++;
-            break;
-        case 8:
-            // BEQ
-            c.Branch = 1;
-            c.ALUOp = 2;
-            m->contInstImm ++;
-            break;
-        case 2:
-            // JUMP
-            c.jump = 1;
-            m->contInstJump ++;
-            break;
-
-    } return c;
-
-}
 
 void limparBuffer() {
     char c;
@@ -671,19 +526,7 @@ int mux_jump(int sinal_jump,int entrada1,int entrada2)
     }
     return 0;
 }
-void imprimir_mem_dados(int mem[]){
-    printf("\n======memoria de dados======\n");
-    for (int i = 0; i < 16; i++) // linhas
-    {
-        for (int j = 0; j < 16; j++) // colunas
-        {
-            int idx = i * 16 + j;
-            printf("[%3d] =%4d |",idx, mem[idx]);
-        }
 
-        printf("\n");
-    }
-}
 
 
 void gerar_asm(instrucao p,int pc,char bin[]){
@@ -737,15 +580,7 @@ void gerar_asm(instrucao p,int pc,char bin[]){
 
     fclose(arquivo);
 }
-void gerar_dat(int memoria[])
-{
-    FILE *arq=fopen("arquivo_dados.txt","w");
-    for (int  i = 0; i < 256; i++)
-    {
-        fprintf(arq,"%d\t",memoria[i]);
-    }
-    fclose(arq);
-}
+
 
 void mostrar_metricas(metricas m) {
     printf("\n\n---Métricas---"
@@ -916,6 +751,38 @@ controle sinais_controle_multiclo(int estado_atual)
         c.Branch=0;
         c.RegWrite=0;
         return c;
+    case 2:
+        c.ula_fonteA=1;
+        c.ula_fonteB=2;
+        c.ALUOp=0;
+        return c;
+    case 3:
+        c.MemWrite=0;
+        c.IouD=1;
+        c.ula_fonteA=1;
+        c.ula_fonteB=2;
+        return c;
+    case 4:
+        c.RegWrite=1;
+        c.MemToReg=1;
+        c.RegDst=0;
+        c.ula_fonteA=1;
+        c.ula_fonteB=2;
+        return c;
+    case 5:
+        c.MemWrite=1;
+        c.IouD=1;
+        c.ula_fonteA=1;
+        c.ula_fonteB=2;
+        return c;
+    case 6:
+        c.MemWrite=0;
+        c.RegWrite=1;
+        c.RegDst=0;
+        c.MemToReg=0;
+        c.ula_fonteB=2;
+        c.ula_fonteA=1;
+        return c;
     case 7:
         c.PCwrite=0;
         c.MemWrite=0;
@@ -935,6 +802,18 @@ controle sinais_controle_multiclo(int estado_atual)
         c.origPC=0;
         c.MemRead=0;
         c.Irwrite=0;
+        return c;
+    case 9:
+        c.ula_fonteB=0;
+        c.ula_fonteA=1;
+        c.ALUOp=2;
+        c.Branch=1;
+        c.PCwrite=0;
+        c.origPC=1;
+        return c;
+    case 10:
+        c.PCwrite=1;
+        c.origPC=2;
         return c;
     default:
         break;
