@@ -210,8 +210,6 @@ int main() {
             i = busca(bin, memu, pc);
            printf("\nPC da proxima instrucao:%d",pc);
          break;
-         case 10:
-           break;
          default:
              return 0;
              break;
