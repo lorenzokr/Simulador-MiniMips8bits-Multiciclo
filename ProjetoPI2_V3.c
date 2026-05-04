@@ -107,7 +107,8 @@ int main() {
     int temp_pc=0;
     
     printf("\n\nMenu de opcoes do programa");
-    do { printf("\n\n[1] Carregar memoria de instrucao");
+    do { 
+     printf("\n\n[1] Carregar memoria de instrucao");
      printf("\n[2] executar um stap no multiclo");
      printf("\n[3] Imprimir memoria");
      printf("\n[4] Imprimir banco de registradores");
