@@ -153,10 +153,10 @@ int main() {
     int temp_pc=0;
     descritorPilha Pilha;
     Pilha.topo = NULL;
-    printf("\n\nMenu de opcoes do programa");
     do { 
-     printf("\n\n[1] Carregar memoria de instrucao");
-     printf("\n[2] executar um clock no multiclo");
+     printf("\nMenu de opcoes do programa");
+     printf("\n[1] Carregar memoria de instrucao");
+     printf("\n[2] Executar clocks no multiclo");
      printf("\n[3] Imprimir memoria");
      printf("\n[4] Imprimir banco de registradores");
      printf("\n[5] Imprimir todo simulador");
@@ -166,7 +166,7 @@ int main() {
      printf("\n[9] Resetar o programa");
      printf("\n[10] Voltar um clock");
      printf("\n[0] Encerrar programa");
-     printf("\n\nescolha uma opção: ");
+     printf("\nEscolha uma opção: ");
      scanf("%d",&escolha);
      switch (escolha) {
          case 1:
@@ -176,6 +176,11 @@ int main() {
          case 2: 
             //O GURIS EU COLOQUEI ISSO PORQUE COMEÇAR ALI NO CASE 9 EU ACHEI MEIO COMPLICADO PORQUE é MUITA COISA
             //ENTAO VOU FAZER PRIMEIRO AQUI
+            int cont=0;
+            int alvo=0;
+            printf("Quantos clocks executar: ");
+            scanf("%d", &alvo);
+          do{
             switch (etapa)
             {
             case 1:
@@ -188,7 +193,7 @@ int main() {
                 printf("\nEstagio proximo:%d",etapa);
                 printf("\nAtual valor pc:%d",pc);
                 diagrama(Reg_dados, Reg_tempA, Reg_tempB, Reg_aluOUT);
-                
+                cont++;
                 break;
             case 2:
                 push(&Pilha, registradores, RegIR, pc, Reg_tempA, Reg_tempB, Reg_dados, Reg_aluOUT, metricas, etapa, estado_atual, i, funct);
@@ -201,6 +206,7 @@ int main() {
                 printf("\nVALOR DO REGISTRADOR SAIDA ULA:%d",Reg_aluOUT);
                 printf("\nEstagio proximo:%d",etapa);
                 diagrama(Reg_dados, Reg_tempA, Reg_tempB, Reg_aluOUT);
+                cont++;
                 break;
 
             case 3:
@@ -211,6 +217,7 @@ int main() {
                 printf("\nValor atual do pc:%d",pc);
                 printf("\nValor do registrador ula saida:%d",Reg_aluOUT);
                 diagrama(Reg_dados, Reg_tempA, Reg_tempB, Reg_aluOUT);
+                cont++;
                 break;
             case 4:
                 push(&Pilha, registradores, RegIR, pc, Reg_tempA, Reg_tempB, Reg_dados, Reg_aluOUT, metricas, etapa, estado_atual, i, funct);
@@ -218,6 +225,7 @@ int main() {
                 printf("\nEstado:%d",estado_atual);
                 quarto_estagio_multiciclo(&estado_atual,&etapa,&Reg_aluOUT,Reg_tempB,Reg_tempA,i.rd,memu,registradores,&Reg_dados,pc,i.imm,i.opcode,i.rt, &metricas,i.funct);
                 diagrama(Reg_dados, Reg_tempA, Reg_tempB, Reg_aluOUT);
+                cont++;
                 break;
             case 5:
                 push(&Pilha, registradores, RegIR, pc, Reg_tempA, Reg_tempB, Reg_dados, Reg_aluOUT, metricas, etapa, estado_atual, i, funct);
@@ -225,10 +233,12 @@ int main() {
                 printf("\nEstado:%d",estado_atual);
                 quinto_estagio_multiciclo(&estado_atual,&etapa,Reg_dados,Reg_aluOUT,i.rd,i.rt,registradores, &metricas,i.funct,i.opcode);
                 diagrama(Reg_dados, Reg_tempA, Reg_tempB, Reg_aluOUT);
+                cont++;  
                 break;
             default:
                 break;
             }
+          }while(cont <alvo);
          break;
          case 3:
             imprimir_memoria(memu,m,n,bin);
