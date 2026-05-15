@@ -127,7 +127,7 @@ void quarto_estagio_multiciclo(int *estado_atual,int *etapa,int *Reg_aluout,int 
 void quinto_estagio_multiciclo(int *estado_atual,int *etapa,int MDR,int Reg_aluout,int rd,int rt,int registradores[8], metricas *metricas,int funct,int opcode);
 void push(descritorPilha *descritor, int registradores[8], char RegIR[17], int pc, int Reg_tempA, int Reg_tempB, int Reg_dados, int Reg_aluOUT, metricas metricas, int etapa, int estadoAtual, instrucao instrucao, int funct);
 void pop(descritorPilha *descritor, int registradores[8], char RegIR[17], int *pc, int *Reg_tempA, int *Reg_tempB, int *Reg_dados, int *Reg_aluOUT, metricas *metricas, int *etapa, int *estadoAtual, instrucao *instrucao, int *funct);
-void esvaziarPilha (descritorPilha *descritor);
+void empty (descritorPilha *descritor);
 void limparBuffer (); 
 void resetar(int *pc, int *estado_atual, int *etapa, char memu[256][17], int registradores[8]);
 
@@ -288,13 +288,13 @@ int main() {
            printf("\nPC da proxima instrucao:%d",pc);
          break;
          default:
-             esvaziarPilha(&Pilha);
+             empty(&Pilha);
              return 0;
              break;
     }
 } while (escolha !=0);
 
-esvaziarPilha(&Pilha);
+empty(&Pilha);
 return 0;
 }
 
@@ -1233,6 +1233,11 @@ void push(descritorPilha *descritor, int registradores[8], char RegIR[17], int p
     return;
 }
 void pop(descritorPilha *descritor, int registradores[8], char RegIR[17], int *pc, int *Reg_tempA, int *Reg_tempB, int *Reg_dados, int *Reg_aluOUT, metricas *metricas, int *etapa, int *estadoAtual, instrucao *instrucao, int *funct) {
+    
+    if(descritor->topo == NULL) {
+        printf("\n\n Pilha vazia. ");
+        return;
+    }
     nodoPilha *nodo = descritor->topo;
     memcpy(memu, nodo->memu, sizeof(nodo->memu));
     memcpy(registradores, nodo->registradores, sizeof(nodo->registradores));
@@ -1257,7 +1262,7 @@ void pop(descritorPilha *descritor, int registradores[8], char RegIR[17], int *p
     free(nodo);
 }
 
-void esvaziarPilha (descritorPilha *descritor) {
+void empty (descritorPilha *descritor) {
     nodoPilha *nodo = descritor->topo, *nodoAux;
     while (nodo != NULL) {
         nodoAux = nodo->ant;
